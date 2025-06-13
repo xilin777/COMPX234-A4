@@ -17,8 +17,8 @@ def download_file(sock, server_addr, filename):
         print(f"Error: File {filename} not found on server.")
         return True
     elif parts[0] == "OK":
-        size = int(parts[4])
-        port = int(parts[6])
+        size = int(parts[3])
+        port = int(parts[5])
         server_addr = (server_addr[0], port)
         print(f"Downloading {filename}, size: {size} bytes")
 

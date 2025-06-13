@@ -20,15 +20,20 @@ def handle_file_transmission(filename, client_addr, welcome_sock):
     welcome_sock.sendto(response.encode(), client_addr)
 
     if os.path.exists(filename):
+        size = os.path.getsize(filename)
+        response = f"OK {filename} SIZE {size} PORT {data_port}"
         with open(filename, "rb") as f:
             while True:
                 request, addr = data_sock.recvfrom(4096)
                 request = request.decode().strip()
                 parts = request.split()
+                if len(parts) < 4: 
+                        continue
+                    
                 if parts[0] == "FILE" and parts[3] == "CLOSE":
                     data_sock.sendto(f"FILE {filename} CLOSE_OK".encode(), addr)
                     break
-                elif parts[0] == "FILE" and parts[3] == "GET":
+                elif "GET" in request and len(parts) >= 8:
                     start = int(parts[5])
                     end = int(parts[7])
                     f.seek(start)
