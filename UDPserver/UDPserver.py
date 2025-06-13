@@ -55,4 +55,11 @@ if __name__ == "__main__":
     print(f"Server listening on port {port}")
     while True:
         request, client_addr = welcome_sock.recvfrom(4096)
-        print(f"Received request from {client_addr}: {request.decode().strip()}")
+        request = request.decode().strip()
+        parts = request.split()
+        if parts[0] == "DOWNLOAD" and len(parts) == 2:
+            filename = parts[1]
+            thread = threading.Thread(target=handle_file_transmission, args=(filename, client_addr, welcome_sock))
+            thread.start()
+        else:
+            print(f"Invalid request from {client_addr}: {request}")
