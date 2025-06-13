@@ -1,6 +1,10 @@
-# Initial setup for UDP server
-# This file will handle multiple client requests using threads
-# TODO: Implement socket setup and threading for multiple clients
+import sys
 
+# Parse command line arguments
 if __name__ == "__main__":
-    print("UDP server starting...")
+    if len(sys.argv) != 2:
+        print("Usage: python UDPserver.py <port>")
+        sys.exit(1)
+    
+    port = int(sys.argv[1])
+    print(f"Server configured to listen on port {port}")
