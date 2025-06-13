@@ -89,6 +89,8 @@ if __name__ == "__main__":
         with open(file_list, "r") as f:
             filenames = [line.strip() for line in f if line.strip()]
             print(f"Files to download: {filenames}")
+            for filename in filenames:
+                download_file(sock, (hostname, port), filename)
     except FileNotFoundError:
         print(f"Error: {file_list} not found.")
         sock.close()
