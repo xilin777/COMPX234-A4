@@ -1,6 +1,53 @@
 import sys
 import socket
 import time
+import base64
+
+# Download single file
+def download_file(sock, server_addr, filename):
+    # Send DOWNLOAD request
+    request = f"DOWNLOAD {filename}"
+    response = send_and_receive(sock, server_addr, request)
+    if not response:
+        return False
+
+    # Parse response
+    parts = response.split()
+    if parts[0] == "ERR":
+        print(f"Error: File {filename} not found on server.")
+        return True
+    elif parts[0] == "OK":
+        size = int(parts[4])
+        port = int(parts[6])
+        server_addr = (server_addr[0], port)
+        print(f"Downloading {filename}, size: {size} bytes")
+
+        # Create local file
+        with open(filename, "wb") as f:
+            downloaded = 0
+            while downloaded < size:
+                start = downloaded
+                end = min(start + 999, size - 1)  # Request 1000 bytes at a time
+                request = f"FILE {filename} GET START {start} END {end}"
+                response = send_and_receive(sock, server_addr, request)
+                if not response:
+                    break
+                parts = response.split(" DATA ")
+                if parts[0] == f"FILE {filename} OK START {start} END {end}":
+                    data = base64.b64decode(parts[1])
+                    f.seek(start)
+                    f.write(data)
+                    downloaded += len(data)
+                    print("*", end="", flush=True)
+            print("\nFile download complete.")
+
+        # Send close request
+        request = f"FILE {filename} CLOSE"
+        response = send_and_receive(sock, server_addr, request)
+        if response and response == f"FILE {filename} CLOSE_OK":
+            print(f"Closed connection for {filename}")
+        return True
+    return False
 
 # Reliable send and receive function
 def send_and_receive(sock, server_addr, message, max_attempts=5, initial_timeout=1):
