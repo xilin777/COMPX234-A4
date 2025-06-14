@@ -66,8 +66,44 @@ def handle_client_request(filename, client_address, server_socket):
                 except Exception as e:
                     print(f"[ERROR] Processing error: {str(e)}")
                     break
+                
+    finally:
+        client_socket.close()
+        print(f"[COMPLETE] Transfer finished for {filename}")
 
-    
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python3 UDPserver.py <port>")
+        sys.exit(1)
+
+    port = int(sys.argv[1])
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        server_socket.bind(('', port))
+        print(f"[SERVER] Listening on port {port}")
+
+        while True:
+            data, addr = server_socket.recvfrom(1024)
+            message = data.decode().strip()
+
+            if message.startswith("DOWNLOAD"):
+                filename = message.split()[1]
+                print(f"[REQUEST] {addr} requested {filename}")
+                thread = threading.Thread(
+                    target=handle_client_request,
+                    args=(filename, addr, server_socket),
+                    daemon=True
+                )
+                thread.start()
+
+    except KeyboardInterrupt:
+        print("\n[SERVER] Shutting down...")
+    finally:
+        server_socket.close()
+
+     
 
 if __name__ == "__main__":
     import sys
