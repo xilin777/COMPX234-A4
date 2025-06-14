@@ -34,33 +34,33 @@ def download_file(control_sock, filename, server_address):
     data_port = int(parts[5])
     data_address = (server_address[0], data_port)
     print(f"[INFO] Downloading {filename} ({file_size} bytes) via port {data_port}")
-        # Create local file
-        with open(filename, "wb") as f:
-            downloaded = 0
-            while downloaded < size:
-                start = downloaded
-                end = min(start + 999, size - 1)  # Request 1000 bytes at a time
-                request = f"FILE {filename} GET START {start} END {end}"
-                response = send_and_receive(sock, server_addr, request)
-                if not response:
-                    break
-                parts = response.split(" DATA ")
-                if parts[0] == f"FILE {filename} OK START {start} END {end}":
-                    data = base64.b64decode(parts[1])
-                    f.seek(start)
-                    f.write(data)
-                    downloaded += len(data)
-                    print("*", end="", flush=True)
-            print("\nFile download complete.")
+        
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as data_sock:
+        data_sock.settimeout(5)
 
-        # Send close request
-        request = f"FILE {filename} CLOSE"
-        response = send_and_receive(sock, server_addr, request)
-        if response and response == f"FILE {filename} CLOSE_OK":
-            print(f"Closed connection for {filename}")
-        return True
-    return False
+        try:
+            with open(filename, 'wb') as f:
+                downloaded = 0
+                while downloaded < file_size:
+                    # Block request
+                    start = downloaded
+                    end = min(start + 999, file_size - 1)
+                    request = f"FILE {filename} GET START {start} END {end}"
+                    response = send_and_receive(data_sock, request, data_address)
+                    if not response:
+                        print("[ERROR] No data response")
+                        continue
 
+                    if " DATA " not in response:
+                        print(f"[ERROR] Invalid response format: {response[:50]}...")
+                        continue
+
+                    header, payload = response.split(" DATA ", 1)
+                    expected_header = f"FILE {filename} OK START {start} END {end}"
+                    if header != expected_header:
+                        print(f"[ERROR] Header mismatch: expected {expected_header}, got {header}")
+                        continue 
+                    
 # Reliable send and receive function
 def send_and_receive(sock, server_addr, message, max_attempts=5, initial_timeout=1):
     attempts = 0
