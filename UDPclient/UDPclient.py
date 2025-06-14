@@ -18,12 +18,16 @@ def send_and_receive(sock, message, server_address, timeout=2, max_retries=3):
     return None
 
 # Download single file
-def download_file(sock, server_addr, filename):
-    # Send DOWNLOAD request
-    request = f"DOWNLOAD {filename}"
-    response = send_and_receive(sock, server_addr, request)
+def download_file(control_sock, filename, server_address):
+    # File metadata request
+    response = send_and_receive(control_sock, f"DOWNLOAD {filename}", server_address)
     if not response:
+        print(f"[FAILED] No response for {filename}")
         return False
+
+    if response.startswith("ERR"):
+        print(f"[ERROR] Server response: {response}")
+        return False 
 
     # Parse response
     parts = response.split()
