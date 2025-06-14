@@ -92,6 +92,9 @@ def main():
     port = int(sys.argv[2])
     filelist = sys.argv[3]
     server_address = (host, port)
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as control_sock:
+        control_sock.settimeout(3)
         
 if __name__ == "__main__":
     import os
