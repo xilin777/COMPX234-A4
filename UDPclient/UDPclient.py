@@ -72,10 +72,16 @@ def download_file(control_sock, filename, server_address):
                         continue
                     
 # Final confirmation
-        response = send_and_receive(data_sock, f"FILE {filename} CLOSE", data_address)
-        if response == f"FILE {filename} CLOSE_OK":
-            print(f"\n[SUCCESS] {filename} downloaded successfully")
-            return True
+            response = send_and_receive(data_sock, f"FILE {filename} CLOSE", data_address)
+            if response == f"FILE {filename} CLOSE_OK":
+               print(f"\n[SUCCESS] {filename} downloaded successfully")
+               return True 
+        
+        except Exception as e:
+            print(f"\n[CRITICAL] Download failed: {str(e)}")
+            if os.path.exists(filename):
+                os.remove(filename)
+            return False
         
 # Parse command line arguments
 if __name__ == "__main__":
