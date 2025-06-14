@@ -96,6 +96,14 @@ def main():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as control_sock:
         control_sock.settimeout(3)
         
+        try:
+            with open(filelist) as f:
+                files = [line.strip() for line in f if line.strip()]
+
+            for filename in files:
+                if not download_file(control_sock, filename, server_address):
+                    print(f"[WARNING] Failed to download {filename}")
+        
 if __name__ == "__main__":
     import os
     main()
