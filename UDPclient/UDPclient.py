@@ -29,7 +29,7 @@ def download_file(control_sock, filename, server_address):
         print(f"[ERROR] Server response: {response}")
         return False 
 
-        parts = response.split()
+    parts = response.split()
     file_size = int(parts[3])
     data_port = int(parts[5])
     data_address = (server_address[0], data_port)
