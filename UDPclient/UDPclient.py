@@ -29,17 +29,11 @@ def download_file(control_sock, filename, server_address):
         print(f"[ERROR] Server response: {response}")
         return False 
 
-    # Parse response
-    parts = response.split()
-    if parts[0] == "ERR":
-        print(f"Error: File {filename} not found on server.")
-        return True
-    elif parts[0] == "OK":
-        size = int(parts[3])
-        port = int(parts[5])
-        server_addr = (server_addr[0], port)
-        print(f"Downloading {filename}, size: {size} bytes")
-
+        parts = response.split()
+    file_size = int(parts[3])
+    data_port = int(parts[5])
+    data_address = (server_address[0], data_port)
+    print(f"[INFO] Downloading {filename} ({file_size} bytes) via port {data_port}")
         # Create local file
         with open(filename, "wb") as f:
             downloaded = 0
