@@ -71,27 +71,12 @@ def download_file(control_sock, filename, server_address):
                         print(f"\n[ERROR] Decoding failed: {str(e)}")
                         continue
                     
-# Reliable send and receive function
-def send_and_receive(sock, server_addr, message, max_attempts=5, initial_timeout=1):
-    attempts = 0
-    current_timeout = initial_timeout
-    while attempts < max_attempts:
-        try:
-            # Send request
-            sock.sendto(message.encode(), server_addr)
-            # Set timeout
-            sock.settimeout(current_timeout)
-            # Receive response
-            response, _ = sock.recvfrom(4096)
-            return response.decode().strip()
-        except socket.timeout:
-            print(f"Timeout, attempt {attempts + 1}, doubling timeout to {current_timeout * 2}s")
-            attempts += 1
-            current_timeout *= 2
-            time.sleep(current_timeout)  # Wait before retrying
-    print("Max attempts reached, giving up.")
-    return None
-
+# Final confirmation
+        response = send_and_receive(data_sock, f"FILE {filename} CLOSE", data_address)
+        if response == f"FILE {filename} CLOSE_OK":
+            print(f"\n[SUCCESS] {filename} downloaded successfully")
+            return True
+        
 # Parse command line arguments
 if __name__ == "__main__":
     if len(sys.argv) != 4:
