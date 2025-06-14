@@ -104,6 +104,11 @@ def main():
                 if not download_file(control_sock, filename, server_address):
                     print(f"[WARNING] Failed to download {filename}")
         
+        except FileNotFoundError:
+            print(f"[ERROR] File list {filelist} not found")
+        except Exception as e:
+            print(f"[ERROR] Fatal error: {str(e)}")
+            
 if __name__ == "__main__":
     import os
     main()
