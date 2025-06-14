@@ -3,6 +3,20 @@ import socket
 import time
 import base64
 
+def send_and_receive(sock, message, server_address, timeout=2, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            sock.sendto(message.encode(), server_address)
+            sock.settimeout(timeout * (attempt + 1))
+            response, _ = sock.recvfrom(4096)
+            return response.decode().strip()
+        except socket.timeout:
+            print(f"[RETRY] Timeout (attempt {attempt + 1})")
+        except Exception as e:
+            print(f"[ERROR] Communication error: {str(e)}")
+            break
+    return None
+
 # Download single file
 def download_file(sock, server_addr, filename):
     # Send DOWNLOAD request
