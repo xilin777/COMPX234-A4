@@ -26,31 +26,51 @@ def handle_client_request(filename, client_address, server_socket):
         if not (os.path.exists(filename) and os.access(filename, os.R_OK)):
             server_socket.sendto(f"ERR {filename} NOT_FOUND".encode(), client_address)
             return
-    except Exception as e:
-        print(f"[ERROR] Exception occurred while handling client request: {str(e)}")
-        server_socket.sendto(f"ERR {filename} SERVER_ERROR".encode(), client_address)
-        return
-# Parse command line arguments
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python UDPserver.py <port>")
-        sys.exit(1)
-    
-    port = int(sys.argv[1])
-    print(f"Server configured to listen on port {port}")
-    
-    # Create UDP socket and bind
-    welcome_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    welcome_sock.bind(('', port))
+        
+        file_size = os.path.getsize(filename)
+        server_socket.sendto(f"OK {filename} SIZE {file_size} PORT {port}".encode(), client_address)
+        print(f"[TRANSFER] Starting {filename} ({file_size} bytes) on port {port}")
+        
+        # Open file for reading in binary mode
+        with open(filename, 'rb') as f:
+            while True:
+                try:
+                    data, addr = client_socket.recvfrom(2048)
+                    request = data.decode().strip()
 
-    print(f"Server listening on port {port}")
-    while True:
-        request, client_addr = welcome_sock.recvfrom(4096)
-        request = request.decode().strip()
-        parts = request.split()
-        if parts[0] == "DOWNLOAD" and len(parts) == 2:
-            filename = parts[1]
-            thread = threading.Thread(target=handle_file_transmission, args=(filename, client_addr, welcome_sock))
-            thread.start()
-        else:
-            print(f"Invalid request from {client_addr}: {request}")
+                    if request.startswith(f"FILE {filename} GET"):
+                        parts = request.split()
+                        start = int(parts[4])
+                        end = int(parts[6])
+                        f.seek(start)
+                        chunk = f.read(end - start + 1)
+
+                        if not chunk:  
+                            break
+
+                        encoded = base64.b64encode(chunk).decode('utf-8')
+                        if not encoded:
+                            print("[ERROR] Base64 encoding failed!")
+                            continue
+
+                        response = f"FILE {filename} OK START {start} END {end} DATA {encoded}"
+                        client_socket.sendto(response.encode(), addr)
+                        print(f"[SENT] Block {start}-{end} ({len(chunk)} bytes)")
+
+                    elif request.startswith(f"FILE {filename} CLOSE"):
+                        client_socket.sendto(f"FILE {filename} CLOSE_OK".encode(), addr)
+                        break
+
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    print(f"[ERROR] Processing error: {str(e)}")
+                    break
+
+    
+
+if __name__ == "__main__":
+    import sys
+    
+    
+    main( )
