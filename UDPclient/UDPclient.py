@@ -61,6 +61,16 @@ def download_file(control_sock, filename, server_address):
                         print(f"[ERROR] Header mismatch: expected {expected_header}, got {header}")
                         continue 
                     
+                    try:
+                        chunk = base64.b64decode(payload)
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        print(f"\r[PROGRESS] {downloaded}/{file_size} bytes ({downloaded * 100 / file_size:.1f}%)",
+                              end="")
+                    except Exception as e:
+                        print(f"\n[ERROR] Decoding failed: {str(e)}")
+                        continue
+                    
 # Reliable send and receive function
 def send_and_receive(sock, server_addr, message, max_attempts=5, initial_timeout=1):
     attempts = 0
