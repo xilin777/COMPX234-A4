@@ -21,7 +21,15 @@ def handle_client_request(filename, client_address, server_socket):
                 server_socket.sendto(f"ERR {filename} PORT_ERROR".encode(), client_address)
                 return
 
-
+    try:
+        # Send OK message to client
+        if not (os.path.exists(filename) and os.access(filename, os.R_OK)):
+            server_socket.sendto(f"ERR {filename} NOT_FOUND".encode(), client_address)
+            return
+    except Exception as e:
+        print(f"[ERROR] Exception occurred while handling client request: {str(e)}")
+        server_socket.sendto(f"ERR {filename} SERVER_ERROR".encode(), client_address)
+        return
 # Parse command line arguments
 if __name__ == "__main__":
     if len(sys.argv) != 2:
