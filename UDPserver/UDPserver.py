@@ -5,43 +5,21 @@ import random
 import os
 import base64
 # Handle file transmission in a separate thread
-def handle_file_transmission(filename, client_addr, welcome_sock):
-    # Select a random port
-    data_port = random.randint(50000, 51000)
-    data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    data_sock.bind(('', data_port))
-
-    # Check if file exists
-    if os.path.exists(filename):
-        size = os.path.getsize(filename)
-        response = f"OK {filename} SIZE {size} PORT {data_port}"
-    else:
-        response = f"ERR {filename} NOT_FOUND"
-    welcome_sock.sendto(response.encode(), client_addr)
-
-    if os.path.exists(filename):
-        size = os.path.getsize(filename)
-        response = f"OK {filename} SIZE {size} PORT {data_port}"
-        with open(filename, "rb") as f:
-            while True:
-                request, addr = data_sock.recvfrom(4096)
-                request = request.decode().strip()
-                parts = request.split()
-                if len(parts) < 4: 
-                        continue
-                    
-                if parts[0] == "FILE" and parts[3] == "CLOSE":
-                    data_sock.sendto(f"FILE {filename} CLOSE_OK".encode(), addr)
-                    break
-                elif "GET" in request and len(parts) >= 8:
-                    start = int(parts[5])
-                    end = int(parts[7])
-                    f.seek(start)
-                    data = f.read(end - start + 1)
-                    encoded_data = base64.b64encode(data).decode()
-                    response = f"FILE {filename} OK START {start} END {end} DATA {encoded_data}"
-                    data_sock.sendto(response.encode(), addr)
-        data_sock.close()
+def handle_client_request(filename, client_address, server_socket):
+    # Send OK message to client
+    for attempt in range(3):
+        port = random.randint(50000, 51000)
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            client_socket.bind(('', port))
+            print(f"[SUCCESS] Data port {port} bound for {filename}")
+            break
+        except Exception as e:
+            print(f"[WARNING] Port {port} bind failed (attempt {attempt + 1}): {str(e)}")
+            client_socket.close()
+            if attempt == 2:
+                server_socket.sendto(f"ERR {filename} PORT_ERROR".encode(), client_address)
+                return
 
 
 # Parse command line arguments
