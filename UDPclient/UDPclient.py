@@ -83,6 +83,16 @@ def download_file(control_sock, filename, server_address):
                 os.remove(filename)
             return False
         
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python3 UDPclient.py <host> <port> <filelist>")
+        sys.exit(1)
+
+    host = sys.argv[1]
+    port = int(sys.argv[2])
+    filelist = sys.argv[3]
+    server_address = (host, port)
+        
 # Parse command line arguments
 if __name__ == "__main__":
     if len(sys.argv) != 4:
